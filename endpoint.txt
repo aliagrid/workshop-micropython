@@ -1,1 +1,2 @@
 a2gtmtqc9uqfhn-ats.iot.eu-west-1.amazonaws.com
+test_topic
