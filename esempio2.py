@@ -6,7 +6,7 @@ import network
 from umqtt.simple import MQTTClient
 from ssl import SSLContext
 import ssl
-from machine import I2C, Pin
+from machine import SoftI2C, Pin
 from bme import *
 import wifi_credentials
 
@@ -17,27 +17,22 @@ def _get_ssl_params(key, cert, _ssl):
     _ssl.load_cert_chain(certfile, keyfile)
     return _ssl
 
-bme = BME680_I2C(I2C(-1, Pin(44), Pin(43)))
+bme = BME680_I2C(SoftI2C(scl=Pin(5), sda=Pin(6)))
 
 
 #Enter your AWS IoT endpoint. You can find it in the Settings page of
 #your AWS IoT Core console.
 #https://docs.aws.amazon.com/iot/latest/developerguide/iot-connect-devices.html
-aws_endpoint = b'a2gtmtqc9uqfhn-ats.iot.eu-west-1.amazonaws.com'
+aws_endpoint = b'broker.hivemq.com'
 
 #If you followed the blog, these names are already set.
-thing_name = "Unimi"
 client_id = "Unimi"
-private_key = "certs/private.pem.key"
-private_cert = "certs/certificate.pem.crt"
-_ssl = SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 
 #These are the topics we will subscribe to. We will publish updates to /update.
 #We will subscribe to the /update/delta topic to look for changes in the device shadow.
 topic_pub = "test_topic"
 topic_sub = "test_topic"
-_ssl = _get_ssl_params(private_key, private_cert, _ssl)
 
 #Define pins for LED and light sensor. In this example we are using a FeatherS2.
 #The sensor and LED are built into the board, and no external connections are required.
@@ -60,8 +55,8 @@ if not wlan.isconnected():
 
 
 
-def mqtt_connect(client=client_id, endpoint=aws_endpoint, ssl = _ssl):
-    mqtt = MQTTClient(client_id=client, server=endpoint, port=8883, keepalive=1200, ssl=_ssl)
+def mqtt_connect(client=client_id, endpoint=aws_endpoint):
+    mqtt = MQTTClient(client_id=client, server=endpoint, port=1883, keepalive=1200)
     print("Connecting to AWS IoT...")
     mqtt.connect()
     print("Done")
@@ -87,7 +82,7 @@ def led_state(message):
 #The callback function mqtt_subscribe is what will be called if we
 #get a new message on topic_sub.
 try:
-    mqtt = mqtt_connect(client_id, aws_endpoint,  _ssl)
+    mqtt = mqtt_connect(client_id, aws_endpoint)
     mqtt.set_callback(mqtt_subscribe)
     mqtt.subscribe(topic_sub)
 except:

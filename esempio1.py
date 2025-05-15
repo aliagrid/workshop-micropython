@@ -1,5 +1,5 @@
 from bme import *
-from machine import I2C, Pin
+from machine import SoftI2C, Pin
 import time
 
 
@@ -14,14 +14,16 @@ led.off()
 import network
 import wifi_credentials
 
-sta = network.WLAN(network.STA_IF)
+sta = network.WLAN(network.WLAN.IF_AP)
 if not sta.isconnected():
     print('connecting to network...')
     sta.active(True)
+    sta.config(wifi_credentials.ssid, wifi_credentials.password)
     #sta.connect('your wifi ssid', 'your wifi password')
-    sta.connect(wifi_credentials.ssid, wifi_credentials.password)
+    #sta.connect(wifi_credentials.ssid, wifi_credentials.password)
     while not sta.isconnected():
         pass
+    
 print('network config:', sta.ifconfig())
 
 # ************************
@@ -38,7 +40,7 @@ s.bind(('',80)) # specifies that the socket is reachable
 s.listen(5)     # max of 5 socket connections
 
 
-bme = BME680_I2C(I2C(-1, Pin(44), Pin(43)))
+bme = BME680_I2C(SoftI2C(scl=Pin(5), sda=Pin(6)))
 
 
 # ************************
